@@ -1,4 +1,155 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>つながる新天地 品質MAXチェック表</title><style>body{font-family:system-ui,sans-serif;background:#fff8ed;color:#473b32;margin:0}main{max-width:850px;margin:auto;padding:20px}h1{font-size:1.6rem}header,.panel{background:white;border-radius:16px;padding:18px;margin:15px 0;box-shadow:0 2px 10px #0001}progress{width:100%;height:20px;accent-color:#5aab72}input[type=search]{box-sizing:border-box;width:100%;padding:13px;border:1px solid #ccc;border-radius:10px;font-size:1rem}.tabs{display:flex;flex-wrap:wrap;gap:7px}.tabs button{padding:9px 13px;border:1px solid #b8c7b2;background:#fff;border-radius:20px;cursor:pointer}.tabs button.active{background:#377e55;color:white}label.item{display:flex;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #eee;font-size:1.05rem}label.item input{width:22px;height:22px;accent-color:#377e55}label.done span{text-decoration:line-through;color:#777}.muted{color:#706b65;font-size:.9rem}button.reset{border:1px solid #b44;color:#a33;background:white;border-radius:8px;padding:8px}#count{font-weight:bold}</style></head><body><main><header><h1>🌱 つながる新天地 品質MAXチェック表</h1><p>品質MAXを達成したらチェック！</p><div id="count"></div><progress id="progress" max="100" value="0"></progress><p class="muted">チェックはこのブラウザ内に保存されます。別の端末には自動同期されません。</p></header><section class="panel"><input id="search" type="search" placeholder="🔎 作物名を検索"><p class="muted">カテゴリーを選んでチェックしてね</p><nav class="tabs" id="tabs"></nav></section><section class="panel"><h2 id="heading"></h2><div id="items"></div></section><section class="panel"><p class="muted">※これは動作確認用の初期リストです。全栽培品目の網羅性・ゲーム内表記は未確認です。確認後に追加・修正できます。</p><button class="reset" id="reset">チェックをすべて解除</button></section></main><script>
-const data={"野菜":["かぶ","じゃがいも","きゅうり","キャベツ","トマト","とうもろこし","たまねぎ","にんじん","ほうれんそう","なす","さつまいも","ピーマン","だいこん","はくさい","ブロッコリー","かぼちゃ"],"果樹":["りんご","ぶどう","もも","バナナ","オレンジ","さくらんぼ","マンゴー","レモン"],"花":["マーガレット","チューリップ","カーネーション","バラ","ひまわり","あじさい","ユリ"],"穀物・その他":["小麦","大豆","お米","茶葉","綿花","亜麻"]};
-const key='bokumono-max-v1';let checked={};try{checked=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch(e){}let category='すべて';const all=Object.entries(data).flatMap(([group,names])=>names.map(name=>({group,name,id:group+':'+name})));const tabs=document.getElementById('tabs'),items=document.getElementById('items'),heading=document.getElementById('heading'),search=document.getElementById('search');function render(){const total=all.length,done=all.filter(x=>checked[x.id]).length,pct=Math.round(done/total*100);document.getElementById('count').textContent=`${done} / ${total} 達成（${pct}%）`;document.getElementById('progress').value=pct;tabs.replaceChildren();for(const c of ['すべて',...Object.keys(data)]){const b=document.createElement('button');b.textContent=c;b.className=c===category?'active':'';b.onclick=()=>{category=c;render()};tabs.append(b)}const q=search.value.trim().toLowerCase();const shown=all.filter(x=>(category==='すべて'||x.group===category)&&x.name.toLowerCase().includes(q));heading.textContent=`${category}（${shown.filter(x=>checked[x.id]).length}/${shown.length}）`;items.replaceChildren();for(const x of shown){const l=document.createElement('label');l.className='item'+(checked[x.id]?' done':'');const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!checked[x.id];cb.onchange=()=>{if(cb.checked)checked[x.id]=true;else delete checked[x.id];try{localStorage.setItem(key,JSON.stringify(checked))}catch(e){alert('保存できませんでした。ブラウザの設定を確認してください。')}render()};const s=document.createElement('span');s.textContent=x.name;l.append(cb,s);items.append(l)}if(!shown.length)items.textContent='該当する作物がありません。'}search.oninput=render;document.getElementById('reset').onclick=()=>{if(confirm('すべてのチェックを解除しますか？')){checked={};localStorage.setItem(key,'{}');render()}};render();
-</script></body></html>
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ゆいの品質MAX牧場</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fff7e9;color:#52604b;font-family:"Yu Gothic",sans-serif}
+header{text-align:center;padding:30px 12px;background:linear-gradient(120deg,#d9efd0,#ffebce);border-bottom:6px solid #bdd5a6}
+h1{font-size:clamp(23px,5vw,36px);margin:12px 0}
+.animals{font-size:32px;letter-spacing:7px}
+main{max-width:1050px;margin:auto;padding:16px}
+section{background:#fffefa;border:2px solid #eadfc7;border-radius:20px;padding:18px;margin:15px 0;box-shadow:0 4px #eee3cd}
+.stats{font-size:24px;font-weight:bold;margin-bottom:12px}
+.track{background:#e6e7d9;border-radius:20px;height:20px;overflow:hidden}
+#bar{height:100%;width:0;background:#83bb77;transition:.2s}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+button{background:white;border:2px solid #c8d6b9;border-radius:22px;padding:10px 14px;color:#426449;cursor:pointer;font-weight:bold}
+button.active{background:#568766;color:white}
+#search{width:100%;padding:14px;border:2px solid #cadabf;border-radius:14px;font-size:17px}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.item{display:flex;gap:12px;align-items:center;padding:14px;background:white;border:1px solid #e6ddc9;border-radius:14px;cursor:pointer}
+.item.done{background:#e3f3df;border-color:#9dc697}
+.item input{width:25px;height:25px;accent-color:#568766;flex-shrink:0}
+.item small{display:block;color:#818579;margin-top:5px}
+.note{font-size:13px;line-height:1.8}
+footer{text-align:center;padding:24px}
+</style>
+</head>
+<body>
+<header>
+<div class="animals">🐮 🐥 🐑 🐰 🐴</div>
+<h1>🌷 ゆいの品質MAX牧場 🌷</h1>
+<p>牧場物語 つながる新天地</p>
+<p>ひとつずつ育てて、目指せコンプリート！ ⭐</p>
+</header>
+<main>
+<section>
+<div class="stats" id="stats"></div>
+<div class="track"><div id="bar"></div></div>
+<p>🌱 チェックは自動保存されるよ！</p>
+</section>
+<section>
+<input id="search" type="search" placeholder="🔎 作物の名前を検索">
+<h3>🌸 季節で探す</h3>
+<div class="filters" id="seasons"></div>
+<h3>🌾 種類で探す</h3>
+<div class="filters" id="types"></div>
+<p id="count"></p>
+</section>
+<section>
+<h2>🐥 品質MAXチェックリスト</h2>
+<div class="items" id="items"></div>
+</section>
+<section class="note">
+<p>🌸 季節・品目は確認を続けている改良版です。全品目の完全網羅は未検証です。</p>
+<p>🌳 果樹は収穫季節を目安に分類しています。</p>
+<p>💾 記録はブラウザごとに保存されます。別端末には自動同期されません。</p>
+</section>
+</main>
+<footer>🐮 今日も素敵な牧場日和 🌷</footer>
+<script>
+const groups=[
+["春","野菜","かぶ,黄金かぶ,じゃがいも,黄金じゃがいも,きゃべつ,黄金きゃべつ,きゅうり,いちご"],
+["春","花","ピンクローズ,マーガレット,チューリップ"],
+["夏","野菜","トマト,黄金トマト,とうもろこし,黄金とうもろこし,たまねぎ,かぼちゃ,パイナップル,すいか,黄金すいか,メロン,黄金メロン"],
+["夏","花","ひまわり,レッドローズ,あじさい"],
+["秋","野菜","ほうれんそう,ごぼう,にんじん,なす,さつまいも,ピーマン,アンデスイモ"],
+["秋","花","なでしこ,ホワイトローズ,ガーベラ"],
+["冬","野菜","だいこん,はくさい,黄金はくさい,ブロッコリー,黄金ブロッコリー"],
+["冬","花","スノードロップ,りんどう,ブルーローズ"],
+["春","果樹","さくらんぼ"],
+["夏","果樹","もも,バナナ,マンゴー,アーモンド"],
+["秋","果樹","りんご,ぶどう,カカオ,キウイ,レモン,マスカット,オリーブ"],
+["冬","果樹","オレンジ"],
+["通年","穀物","小麦,大豆"],
+["通年","水田","お米,れんこん,わさび"],
+["通年","花","サボテン"],
+["通年","その他","サトウキビ,唐辛子,亜麻,綿花,茶葉,牧草"],
+["通年","きのこ","しいたけ,しめじ,エリンギ,ホウキタケ,マッシュルーム,どくきのこ"]
+];
+const data=groups.flatMap(([season,type,names])=>
+ names.split(",").map(name=>({season,type,name}))
+);
+const key="bokumono-max-v2";
+let saved={};
+try{
+ saved=JSON.parse(localStorage.getItem(key)||"{}")||{};
+ const old=JSON.parse(localStorage.getItem("bokumono-max-v1")||"{}")||{};
+ for(const x of data){
+  if(saved[x.name]===undefined &&
+    (old[x.name]===true || old[x.type+"|"+x.name]===true)){
+   saved[x.name]=true;
+  }
+ }
+}catch(e){}
+let season="すべて",type="すべて";
+const $=id=>document.getElementById(id);
+function makeButtons(id,values,current,change){
+ $(id).innerHTML="";
+ values.forEach(v=>{
+  const b=document.createElement("button");
+  b.textContent=v;
+  b.className=v===current?"active":"";
+  b.onclick=()=>{change(v);render()};
+  $(id).appendChild(b);
+ });
+}
+function render(){
+ makeButtons("seasons",
+ ["すべて","春","夏","秋","冬","通年"],
+ season,v=>season=v);
+ makeButtons("types",
+ ["すべて",...new Set(data.map(x=>x.type))],
+ type,v=>type=v);
+ const q=$("search").value.trim();
+ const rows=data.filter(x=>
+  (season==="すべて"||x.season===season)&&
+  (type==="すべて"||x.type===type)&&
+  x.name.includes(q)
+ );
+ const done=data.filter(x=>saved[x.name]).length;
+ const percent=Math.round(done/data.length*100);
+ $("stats").textContent=`${done} / ${data.length} 達成（${percent}%）`;
+ $("bar").style.width=percent+"%";
+ $("count").textContent=`表示中 ${rows.length} 件`;
+ $("items").innerHTML="";
+ rows.forEach(x=>{
+  const label=document.createElement("label");
+  label.className="item"+(saved[x.name]?" done":"");
+  const cb=document.createElement("input");
+  cb.type="checkbox";
+  cb.checked=!!saved[x.name];
+  cb.onchange=()=>{
+   saved[x.name]=cb.checked;
+   try{localStorage.setItem(key,JSON.stringify(saved))}catch(e){}
+   render();
+  };
+  const span=document.createElement("span");
+  const b=document.createElement("b");
+  b.textContent=x.name;
+  const small=document.createElement("small");
+  small.textContent=x.season+" ・ "+x.type;
+  span.append(b,small);
+  label.append(cb,span);
+  $("items").appendChild(label);
+ });
+}
+$("search").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>
